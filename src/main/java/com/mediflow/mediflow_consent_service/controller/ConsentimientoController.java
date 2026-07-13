@@ -1,28 +1,40 @@
 package com.mediflow.mediflow_consent_service.controller;
 
 import com.mediflow.mediflow_consent_service.entity.Consentimiento;
-import com.mediflow.mediflow_consent_service.repository.ConsentimientoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import com.mediflow.mediflow_consent_service.service.ConsentimientoService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/consentimientos")
 public class ConsentimientoController {
 
-    @Autowired
-    private ConsentimientoRepository repository;
+    private final ConsentimientoService consentimientoService;
 
-    @GetMapping("/consentimientos/{id}")
-    public Consentimiento obtener(@PathVariable Long id) {
-        return repository.findById(id).orElse(new Consentimiento()); // Retorna vacío si no existe
+    public ConsentimientoController(
+            ConsentimientoService consentimientoService
+    ) {
+        this.consentimientoService = consentimientoService;
     }
 
-    @PutMapping("/consentimientos/{id}")
-    public Consentimiento actualizar(@PathVariable Long id, @RequestBody Consentimiento nuevo) {
-        nuevo.setPacienteId(id);
-        return repository.save(nuevo);
+    @GetMapping("/{id}")
+    public ResponseEntity<Consentimiento> obtener(
+            @PathVariable Long id
+    ) {
+        return consentimientoService
+                .obtenerPorPacienteId(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Consentimiento> actualizar(
+            @PathVariable Long id,
+            @RequestBody Consentimiento consentimiento
+    ) {
+        Consentimiento actualizado =
+                consentimientoService.actualizar(id, consentimiento);
+
+        return ResponseEntity.ok(actualizado);
     }
 }
